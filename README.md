@@ -5,9 +5,9 @@
 Seminar paper, B560 *Advanced Topics in Asset Management* — University of Tübingen,
 Chair of Finance (Prof. Dr. Monika Gehde-Trapp, M.Sc. Tom Ernst). Submitted January 2026.
 
-**Result in one line:** conditional on a well-specified EGARCH(1,1)-skew-t volatility
+**Result:** Conditional on a well-specified EGARCH(1,1)-skew-t volatility
 engine, a compact Deep Quantile Network does *not* improve one-day VaR forecasts for the
-EURO STOXX 50 — and it degrades the economic interpretability of the volatility-to-VaR
+EURO STOXX 50 - and it degrades the economic interpretability of the volatility-to-VaR
 mapping.
 
 ---
