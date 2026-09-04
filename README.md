@@ -1,6 +1,6 @@
 # The Incremental Value of Deep Quantile Networks for VaR
 
-> Do neural networks add value to a realistic volatility engine?
+### Do neural networks add value to a realistic volatility engine?
 
 Seminar paper, B560 *Advanced Topics in Asset Management* — University of Tübingen,
 Chair of Finance (Prof. Dr. Monika Gehde-Trapp, M.Sc. Tom Ernst). Submitted January 2026.
