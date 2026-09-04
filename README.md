@@ -1,4 +1,4 @@
-# The Incremental Value of Deep Quantile Networks for Value-at-Risk
+# The Incremental Value of Deep Quantile Networks for VaR
 
 > Do neural networks add value to a realistic volatility engine?
 
