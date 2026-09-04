@@ -7,7 +7,7 @@ Chair of Finance (Prof. Dr. Monika Gehde-Trapp, M.Sc. Tom Ernst). Submitted Janu
 
 **Result:** Conditional on a well-specified EGARCH(1,1)-skew-t volatility
 engine, a compact Deep Quantile Network does *not* improve one-day VaR forecasts for the
-EURO STOXX 50 - and it degrades the economic interpretability of the volatility-to-VaR
+EURO STOXX 50. Additionally, it degrades the economic interpretability of the volatility-to-VaR
 mapping.
 
 ---
