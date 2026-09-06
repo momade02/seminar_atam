@@ -2,8 +2,7 @@
 
 ### Do neural networks add value to a realistic volatility engine?
 
-Seminar paper, B560 *Advanced Topics in Asset Management* - University of Tübingen,
-Chair of Finance (Prof. Dr. Monika Gehde-Trapp, M.Sc. Tom Ernst). Submitted January 2026.
+Seminar paper, B560 *Advanced Topics in Asset Management* - University of Tübingen.
 
 **Result:** Conditional on a well-specified EGARCH(1,1)-skew-t volatility
 engine, a compact Deep Quantile Network does *not* improve one-day VaR forecasts for the
@@ -15,33 +14,32 @@ mapping.
 ## Motivation
 
 Most published evidence for neural VaR models feeds the network high-dimensional predictor
-sets, so it implicitly performs both the volatility modelling *and* the quantile mapping.
+sets, so it implicitly performs both the volatility modelling and the quantile mapping.
 Risk desks are not in that position: they already run validated volatility engines and would
 realistically only swap out the final mapping layer.
 
 This paper isolates that layer. A single EGARCH(1,1)-skew-t model is estimated once on
-pre-test data and then **frozen**. All three VaR engines see exactly the same
+pre-test data and then frozen. All three VaR engines see exactly the same
 one-dimensional volatility state, so any performance difference is attributable to the
 functional form of the mapping and nothing else.
 
 ### Research questions
 
-1. **RQ1 — Accuracy.** Given a one-dimensional volatility state, can a compact DQN
+1. **RQ1 — Accuracy:** Given a one-dimensional volatility state, can a compact DQN
    materially improve one-day VaR forecasts (hit rates, coverage tests, pinball loss) over a
    semi-parametric EGARCH benchmark and a linear quantile regression?
-2. **RQ2 — Tail severity.** How do the engines differ in realized shortfall and tail-severity
+2. **RQ2 — Tail severity:** How do the engines differ in realized shortfall and tail-severity
    metrics? Do VaR gains come at the cost of deeper, more concentrated tail losses?
-3. **RQ3 — Plausibility.** Is the DQN's mapping from volatility to VaR monotone and smooth,
+3. **RQ3 — Plausibility:** Is the DQN's mapping from volatility to VaR monotone and smooth,
    or irregular in ways that conflict with standard volatility-risk intuition?
 
 ## Repository contents
 
 | File | Description |
 | --- | --- |
-| `seminar_paper.pdf` | Full paper (13 pages) with all tables, figures and references. |
-| `code_notebook.ipynb` | Complete analysis: data prep, diagnostics, three VaR engines, backtests, interpretability plots. 78 cells, outputs included. |
+| `seminar_paper.pdf` | Full paper with all tables, figures and references. |
+| `code_notebook.ipynb` | Complete analysis: data prep, diagnostics, three VaR engines, backtests, interpretability plots. |
 | `data_eur_stoxx_50.csv` | EURO STOXX 50 daily OHLC, 1996–2024. |
-| `README.md` | This file. |
 
 ## Data
 
@@ -50,8 +48,6 @@ EURO STOXX 50 price index, daily close-to-close, **2 January 1996 – 31 Decembe
 
 Semicolon-delimited with comma decimal separator; the notebook handles the conversion on
 load. Columns: `date`, `close`, `open`, `high`, `low`. Only `close` is used.
-
-*Provider: — to be added.*
 
 **Chronological split, no shuffling:**
 
@@ -65,7 +61,7 @@ moments, so no future information enters the state variable.
 
 ### Why EGARCH-skew-t
 
-Preliminary diagnostics motivate the specification rather than assuming it:
+Preliminary diagnostics motivate the specification:
 
 | Property | Test | Result |
 | --- | --- | --- |
@@ -74,7 +70,7 @@ Preliminary diagnostics motivate the specification rather than assuming it:
 | Volatility clustering | ARCH-LM (lag 10) | 1,232.67, p < 0.0001 |
 | Leverage | Engle–Ng sign/size bias | F = 35.11, p < 0.0001 |
 
-Stationary, heavy-tailed, conditionally heteroscedastic and asymmetric — which is exactly
+Stationary, heavy-tailed, conditionally heteroscedastic and asymmetric. This is exactly
 the case for EGARCH with skewed Student-t innovations.
 
 ## Method
@@ -82,7 +78,7 @@ the case for EGARCH with skewed Student-t innovations.
 ### The frozen backbone
 
 `arch_model(mean="Constant", vol="EGARCH", p=1, o=1, q=1, dist="skewt")` is fitted by maximum
-likelihood on the pre-test sample (5,138 obs). Parameters are then **fixed** and the full
+likelihood on the pre-test sample (5,138 obs). Parameters are then fixed and the full
 sample is filtered with `.fix()` to recover conditional volatility σ̂ₜ across the whole period
 without refitting.
 
@@ -190,14 +186,14 @@ read jointly; conditional severity alone is not a ranking criterion.
 > only 2 exceedances in 206 observations, occurring on the same March-2020 dates for all
 > three models. B5 hit rate and realized shortfall are therefore mechanically identical
 > across models — computed from the same two returns. This does not mean the VaR forecasts
-> agree; it means the effective tail sample is too small to support inference there.
+> agree, but it means the effective tail sample is too small to support inference there.
 
 ### Mapping plausibility (RQ3)
 
 The decisive result. At α = 2.5%, the benchmark traces a stable, monotone lower envelope of
 the return cloud and the LQR gives a linear approximation. The DQN, even with the
 monotonicity penalty active, bends erratically in intermediate-to-high volatility regions.
-Its numerical gradient repeatedly jumps and intermittently crosses zero — implying states
+Its numerical gradient repeatedly jumps and intermittently crosses zero. This implies there are states
 where *higher* volatility maps to a *less* negative VaR.
 
 The scatter overlay explains why: the heteroscedasticity cone means tail observations thin
@@ -215,50 +211,32 @@ burden.
 
 ## Running the notebook
 
-Python 3.12. No pinned environment is committed; install current versions:
+Python 3.12. Install current versions:
 
 ```bash
 pip install numpy pandas scipy statsmodels arch torch matplotlib seaborn
 jupyter lab code_notebook.ipynb
 ```
 
-Run **top to bottom** — cells share state (`features`, `res_pre`, the `alpha_to_col_*` dicts)
-and the later sections will fail on a cold kernel. `data_eur_stoxx_50.csv` is read by
+Run **top to bottom**. `data_eur_stoxx_50.csv` is read by
 relative path, so start Jupyter from the repository root.
 
 Seeds are fixed at 42 for NumPy and PyTorch, with cuDNN determinism enabled when CUDA is
 available. The DQN search is the slow step: 12 configurations × 4 CV folds × 3 α levels =
 144 training runs plus 3 final fits. CPU is sufficient for a one-dimensional input.
 
-The notebook writes no files — figures and tables render inline, and the committed outputs
-are the record of the reported results.
-
 ## Notes and limitations
 
 **Stated in the paper.** One index, one-day horizon, one volatility specification, a
-one-dimensional state, and a modest hyperparameter search. These are design choices rather
-than oversights: constraining the DQN to the same information set as the benchmark is what
-makes the comparison a test of the *mapping layer* instead of the information set. The paper
-notes explicitly that this limits the DQN's potential.
+one-dimensional state, and a modest hyperparameter search. These are design choices: 
+constraining the DQN to the same information set as the benchmark is what
+makes the comparison a test of the mapping layer. I note explicitly that this limits the DQN's potential.
 
 **Not addressed.** Expected Shortfall is evaluated only through realized-shortfall proxies,
-not a formal ES backtest — a gap given that the regulatory motivation in the introduction is
+not a formal ES backtest. This is a gap given that the regulatory motivation in the introduction is
 the FRTB shift from VaR to ES. Longer horizons, multiple indices, and a rolling-refit
 volatility engine are all left open.
 
-**Reproducibility gaps.** No `requirements.txt` or lockfile, so package versions are not
-pinned. Nothing is serialised — no saved figures, fitted models or forecast series — so every
-number in the paper requires a full rerun to regenerate. Determinism holds for a clean
-top-to-bottom execution; re-running individual training cells out of order advances the RNG
-state and shifts results.
-
 ## Key references
 
-- Chronopoulos, I., Raftapostolos, A. & Kapetanios, G. (2023). Forecasting Value-at-Risk using deep neural network quantile regression. *Journal of Financial Econometrics*, 22(3), 636–669.
-- Nelson, D. B. (1991). Conditional heteroskedasticity in asset returns: A new approach. *Econometrica*, 59(2), 347–370.
-- Hansen, B. E. (1994). Autoregressive conditional density estimation. *International Economic Review*, 35(3), 705–730.
-- Barone-Adesi, G., Giannopoulos, K. & Vosper, L. (1999). VaR without correlations for portfolios of derivative securities. *Journal of Futures Markets*, 19(5), 583–602.
-- Chernozhukov, V., Fernández-Val, I. & Galichon, A. (2010). Quantile and probability curves without crossing. *Econometrica*, 78(3), 1093–1125.
-- Engle, R. F. & Manganelli, S. (2004). Dynamic quantile tests, in: CAViaR — conditional autoregressive value at risk by regression quantiles. *Journal of Business & Economic Statistics*, 22(4), 367–381.
-
-Full bibliography in `seminar_paper.pdf`.
+Full bibliography in the paper.
